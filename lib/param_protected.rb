@@ -31,7 +31,7 @@ module Cjbottaro
     module InstanceMethods
     
       def do_param_protected
-        params_to_kill = Helpers.params_to_live_or_kill(self.class.pp_protected, action_name.to_s)
+        params_to_kill = Helpers.params_to_live_or_kill(self.class.pp_protected, action_name.to_s,self)
         params_by_path = Helpers.params_by_path(params)
         params_to_kill.each do |param|
           next unless params_by_path.has_key?(param)
@@ -40,7 +40,7 @@ module Cjbottaro
       end
       
       def do_param_accessible
-        params_to_live = Helpers.params_to_live_or_kill(self.class.pp_accessible, action_name.to_s)
+        params_to_live = Helpers.params_to_live_or_kill(self.class.pp_accessible, action_name.to_s,self)
         return if params_to_live.blank?
         params_by_path = Helpers.params_by_path(params)
         params_by_path.each do |path, hash|
@@ -70,18 +70,25 @@ module Cjbottaro
         return [:except] if actions.blank?
         scope, actions = actions.keys.first, actions.values.first
         actions = [actions] unless actions.instance_of?(Array)
-        actions = actions.collect{ |action| action.to_s }
+        actions = actions.collect{ |action| action.to_s } unless actions.first.instance_of?(Proc)
         [scope, *actions]
       end
       
       # specs will something like...
       # [[param1, param2], [:only, action1, action2]
       #  [param2, param3], [:except, action3, action4]]
-      def self.params_to_live_or_kill(specs, action)
+      def self.params_to_live_or_kill(specs, action, controller)
         specs.inject([]) do |memo, params_actions|
           params, actions = params_actions
           scope = actions.first # actions is a reference to a part of pp_protected or pp_accessible, so we don't want to alter it
-          actions = actions[1..-1]
+          actions = case actions[1]
+          when Array
+            actions[1..-1]
+          when Proc
+            actions[1].bind(controller).call()
+          else
+            []
+          end
           memo += params if scope == :only and actions.include?(action)
           memo += params if scope == :except and !actions.include?(action)
           memo
