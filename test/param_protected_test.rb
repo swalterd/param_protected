@@ -18,6 +18,12 @@ class FakeController < ActionController::Base
     render :text => ''
   end
   
+  private 
+  
+  def get_action_name
+    "fake_action1"
+  end
+  
   protected
 
   def rescue_action(e)
@@ -28,6 +34,8 @@ end
 
 class ParamProtectedTest < Test::Unit::TestCase
 
+  include ActionController::TestProcess
+  
   def setup
     class << FakeController
       attr_accessor :pp_protected, :pp_accessible
@@ -64,6 +72,15 @@ class ParamProtectedTest < Test::Unit::TestCase
 
     get :fake_action2, :user_id => 123
     assert @controller.params.has_key?(:user_id) == false
+  end
+  
+  def test_only_with_proc
+    @controller.class.param_protected :user_id, :only => Proc.new { [get_action_name] }
+    get :fake_action1, :user_id => 123
+    assert @controller.params.has_key?(:user_id) == false
+
+    get :fake_action2, :user_id => 123
+    assert @controller.params.has_key?(:user_id) == true  
   end
 
   def test_param_array

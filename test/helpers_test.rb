@@ -35,9 +35,21 @@ class HelpersTest < Test::Unit::TestCase
     actions = Helpers.normalize_actions(:except => [:blah, :bleck])
     assert_equal [:except, "blah", "bleck"], actions
     
+    actions = Helpers.normalize_actions(:only => Proc.new { ["update"] })
+    assert_equal :only, actions.first
+    assert_equal Proc, actions[1].class
+        
     assert_raises(ArgumentError){ Helpers.normalize_actions(:onlyy => :blah) }
     assert_raises(ArgumentError){ Helpers.normalize_actions(:blah) }
     assert_raises(ArgumentError){ Helpers.normalize_actions(:only => :something, :except => :something) }
+  end
+  
+  def test_finalize_actions
+    actions = [:only, Proc.new {[@action_name]} ]
+    @action_name = :update
+    scope, fixed_actions = Helpers.finalize_actions(actions,self)
+    assert_equal actions[0], scope
+    assert_equal [@action_name], fixed_actions
   end
   
   def test_action_matches

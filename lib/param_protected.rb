@@ -32,7 +32,7 @@ module Cjbottaro
     
       def do_param_protected
         self.class.pp_protected.each do |protected_params, actions|
-          scope, actions = actions.first, actions[1..-1]
+          scope, actions = Helpers.finalize_actions(actions, self)
           Helpers.do_param_protected(protected_params, self.params) \
             if Helpers.action_matches?(scope, actions, self.action_name)
         end
@@ -40,7 +40,7 @@ module Cjbottaro
       
       def do_param_accessible
         self.class.pp_accessible.each do |accessible_params, actions|
-          scope, actions = actions.first, actions[1..-1]
+          scope, actions = Helpers.finalize_actions(actions, self)
           Helpers.do_param_accessible(accessible_params, self.params) \
             if Helpers.action_matches?(scope, actions, self.action_name)
         end
@@ -82,7 +82,7 @@ module Cjbottaro
         
         scope, actions = actions.keys.first, actions.values.first
         actions = [actions] unless actions.instance_of?(Array)
-        actions = actions.collect{ |action| action.to_s }
+        actions = actions.collect{ |action| action.to_s } unless actions.first.instance_of?(Proc)
         [scope, *actions]
       end
       
@@ -94,6 +94,12 @@ module Cjbottaro
         else
           raise ArgumentError, "unexpected scope (#{scope}), expected :only or :except"
         end
+      end
+      
+      def self.finalize_actions(actions, controller)
+        scope = actions.first
+        actions = actions[1].class == Proc ? actions[1].bind(controller).call() : actions = actions[1..-1]
+        [scope, actions]
       end
       
       def self.do_param_protected(protected_params, params)

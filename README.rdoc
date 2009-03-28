@@ -16,7 +16,7 @@ Christopher J. Bottaro
  end
 <tt>param_name</tt> can be a String, Symbol, or Array of Strings and/or Symbols.
 
-<tt>options</tt> is a Hash that has <em>one</em> of two keys:  <tt>:only</tt> or <tt>:except</tt>.  The value for these keys is a String, Symbol, or Array of Strings and/or Symbols which denotes to the action(s) for which params to protect.
+<tt>options</tt> is a Hash that has <em>one</em> of two keys:  <tt>:only</tt> or <tt>:except</tt>.  The value for these keys is a String, Symbol, or Array of Strings and/or Symbols which denotes to the action(s) for which params to protect.  You may also use a Proc to return an array of action names as strings.  This Proc will be run in the context of the controller.
 
 = Examples
 
